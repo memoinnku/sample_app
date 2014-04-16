@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'spec_helper' 
 
 describe "Micropost pages" do
 
@@ -6,6 +6,37 @@ describe "Micropost pages" do
 
   let(:user) { FactoryGirl.create(:user) }
   before { sign_in user }
+
+  describe "micropost page" do
+    before do
+     50.times { FactoryGirl.create(:micropost, user: user) } 
+     visit root_path
+    end
+    after  { Micropost.delete_all }
+    
+    # micropost counts
+    include ActionView::Helpers::TextHelper
+    it { should have_content( pluralize(user.microposts.count, "micropost") )}
+
+    describe "pagination" do
+      it { should have_selector("div.pagination") }
+      it "should list each post" do
+        Micropost.paginate(page: 1).each do |micropost|
+          expect(page).to have_selector('li', text: micropost.content)
+        end
+      end
+    end
+  end
+
+  describe "show delete links" do
+    before do
+      user2 = FactoryGirl.create(:user) 
+      FactoryGirl.create(:micropost, user: user2)
+      visit root_path
+    end
+    after {Micropost.delete_all}
+    it {should_not have_selector('a', text: 'delete')}
+  end
 
   describe "micropost creation" do
     before { visit root_path }
